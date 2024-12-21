@@ -1,0 +1,18 @@
+in optamisation phase: remove json instead fetch from url
+    dont provide testcases in queue msg this makes jsonification slow
+
+in worker add user and give it permision to access ONLY worker/temp
+
+key checking in worker
+
+connection check in workers
+
+add auth in redis and rabbitmq
+
+proper logging
+
+testcases are in memory make them in disk
+
+rabbitmq heartbeat check
+
+use compiled version
