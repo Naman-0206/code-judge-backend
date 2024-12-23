@@ -1,3 +1,5 @@
 import redis
-r = redis.Redis(host='remotecodeexecution-redis-server-1', port=6379, decode_responses=True)
+import os
+
+r = redis.Redis(host=os.getenv("REDIS_HOST"), port=os.getenv("REDIS_PORT"), decode_responses=True)
 r.flushall()

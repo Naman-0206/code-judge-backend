@@ -1,8 +1,9 @@
 import pika
 from redis_client import r
+import os
 
-connection = pika.BlockingConnection(pika.ConnectionParameters(host = 'remotecodeexecution-rabbitmq-1',
-                                                               heartbeat=30))
+connection = pika.BlockingConnection(pika.ConnectionParameters(host=os.getenv("RABBITMQ_HOST"),
+                                                               port=os.getenv("RABBITMQ_PORT")))
 channel = connection.channel()
 
 submit_queue = 'task_queue'
@@ -10,31 +11,6 @@ channel.queue_declare(queue=submit_queue, durable=True)
 
 execution_queue = 'execution_queue'
 channel.queue_declare(queue=execution_queue, durable=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 sample_event_c = {
@@ -63,21 +39,21 @@ int main() {
 #     print(f"Sending: {i}")
 #     message = json.dumps({"job_id":i, **sample_event_c})
 
-    # channel.basic_publish(
-    #         exchange='',
-    #         routing_key=queue_name,
-    #         body=message,
-    #         properties=pika.BasicProperties(
-    #             delivery_mode=2,  # Make the message persistent
-    #         )
-    #     )
+# channel.basic_publish(
+#         exchange='',
+#         routing_key=queue_name,
+#         body=message,
+#         properties=pika.BasicProperties(
+#             delivery_mode=2,  # Make the message persistent
+#         )
+#     )
 
 # connection.close()
 # s = list(range(100))
 # while s:
 #     for i in s:
 #         res = r.get(i)
-#         if res: 
+#         if res:
 #             print(i, res)
 #             s.remove(i)
 #     time.sleep(1)

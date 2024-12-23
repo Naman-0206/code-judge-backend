@@ -1,0 +1,72 @@
+version: "3.9"
+
+services:
+  rabbitmq:
+    image: "rabbitmq:4.0-management"
+    container_name: rabbitmq
+    restart: unless-stopped
+    ports:
+      - "${RABBITMQ_PORT}:5672"
+      - "15672:15672"
+    networks:
+      - app_network
+
+  redis-server:
+    image: "redis"
+    container_name: redis_server
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT}:6379"
+    networks:
+      - app_network
+
+  server:
+    build: "../server"
+    volumes:
+      - "../server:/server"
+    depends_on: [rabbitmq, redis-server]
+    ports:
+      - "${SERVER_PORT}:8000"
+    environment:
+      - RABBITMQ_HOST=${RABBITMQ_HOST}
+      - RABBITMQ_PORT=${RABBITMQ_PORT}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+
+    networks:
+      - app_network
+    restart: unless-stopped
+
+  submission-worker:
+    build: ../workers/submission_worker
+    volumes:
+      - "../workers/submission_worker:/worker/submission_worker"
+    depends_on: [rabbitmq, redis-server]
+    environment:
+      - RABBITMQ_HOST=${RABBITMQ_HOST}
+      - RABBITMQ_PORT=${RABBITMQ_PORT}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+    networks:
+      - app_network
+    restart: unless-stopped
+    scale: 1
+
+  execution-worker:
+    build: ../workers/execution_worker
+    volumes:
+      - "../workers/execution_worker:/worker/execution_worker"
+    depends_on: [rabbitmq, redis-server]
+    environment:
+      - RABBITMQ_HOST=${RABBITMQ_HOST}
+      - RABBITMQ_PORT=${RABBITMQ_PORT}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+    networks:
+      - app_network
+    restart: unless-stopped
+    scale: 1
+
+networks:
+  app_network:
+    driver: bridge
