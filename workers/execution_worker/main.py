@@ -1,5 +1,6 @@
 import json
 import shutil
+import time
 from execution_worker import working_dir
 from execution_worker.utils import compare_files, create_files
 from execution_worker.executors import lang_runners
@@ -15,11 +16,13 @@ def execute_code(event: ExecutionEvent):
     time_limit = event.time_limit
     memory_limit = event.memory_limit
 
-    exit_code = lang_runners[lang](
+    
+    exit_code, runtime = lang_runners[lang](
         source_file_path, input_file_path,
         output_file_path, error_file_path, 
         time_limit, memory_limit
     )  
+
 
     output = open(output_file_path, "r").read() 
     errors = open(error_file_path, "r").read()
@@ -30,10 +33,10 @@ def execute_code(event: ExecutionEvent):
 
     shutil.rmtree(working_dir)
 
-    return exit_code, output, errors
+    return exit_code, output, errors, runtime
 
 
-def handle_error(job_id, exit_code):
+def handle_error(job_id, exit_code, runtime=0):
     """Handle errors and save the result."""
 
     verdict = exit_codes.get(exit_code, "Unknown error")
@@ -41,6 +44,7 @@ def handle_error(job_id, exit_code):
         "job_id": job_id,
         "exit_code": exit_code,
         "verdict": verdict,
+        "runtime": runtime
     }
     return result
 
@@ -64,9 +68,9 @@ def event_callback(ch, method, properties, body):
     print("Received: ", event.job_id)
     
     try:
-        exit_code, output, error = execute_code(event)
+        exit_code, output, error, runtime = execute_code(event)
         if exit_code not in exit_codes:
-            error_msg = handle_error(job_id, 500)
+            error_msg = handle_error(job_id, 500, runtime)
             save_result(job_id, error_msg)
             ch.basic_ack(delivery_tag=method.delivery_tag)    
             return
@@ -77,7 +81,8 @@ def event_callback(ch, method, properties, body):
             "verdict": exit_codes[exit_code],
             "input": event.input,
             "output": output,
-            "error": error
+            "error": error,
+            "runtime": runtime
         }
         save_result(event.job_id, msg)
     
@@ -138,7 +143,7 @@ def event_callback(ch, method, properties, body):
 # }
 
 # if __name__ == "__main__":
-#     exit_code = execute_code(ExecutionEvent(**sample_event_c))
+#     exit_code , runtime = execute_code(ExecutionEvent(**sample_event_c))
 
 #     print("Exit Code:", exit_code)
 #     print("Verdict:", exit_codes.get(exit_code, "Unknown Error"))

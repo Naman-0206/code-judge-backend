@@ -1,9 +1,12 @@
+import asyncio
+from functools import wraps
 import os
-from typing import Tuple
+import time
+from typing import Callable, Tuple
 from execution_worker.models import ExecutionEvent
 
 
-def run_command(command: str, timeout: int = 5, memory_limit: int = 512) -> int:
+def run_command(command: str, timeout: int = 5, memory_limit: int = 512) -> dict:
     """
     Executes a shell command with time and memory limits.
 
@@ -111,3 +114,38 @@ def create_files(event: ExecutionEvent, working_dir: str) -> Tuple[str, str, str
     open(error_file_path, "w").close()
 
     return source_file_path, input_file_path, output_file_path, error_file_path
+
+def time_execution(func):
+    """
+    A decorator to measure the execution time of both synchronous and asynchronous functions.
+    
+    Args:
+        func: The function to be wrapped.
+
+    Returns:
+        A wrapped function that returns the result of the original function along with its execution time.
+        If the original function is asynchronous, the wrapper will also be asynchronous.
+    """
+
+    if asyncio.iscoroutinefunction(func):
+        @wraps(func)
+        async def async_wrapper(*args, **kwargs):
+            start_time = time.time()
+            result = await func(*args, **kwargs)
+            end_time = time.time()
+            execution_time = end_time - start_time
+            execution_time*=100 # in ms
+            execution_time = round(execution_time, 2)
+            return result, execution_time
+        return async_wrapper
+    else:
+        @wraps(func)
+        def sync_wrapper(*args, **kwargs):
+            start_time = time.time()
+            result = func(*args, **kwargs)
+            end_time = time.time()
+            execution_time = end_time - start_time
+            execution_time*=100 # in ms
+            execution_time = round(execution_time, 2)
+            return result, execution_time
+        return sync_wrapper

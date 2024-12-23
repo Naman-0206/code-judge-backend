@@ -27,9 +27,6 @@ job_id_counter = 1
 async def process_code(event: SubmissionEvent):
     global job_id_counter
     
-    # if not event.lang or not event.source_code:
-    #     raise HTTPException(status_code=400, detail="Both 'lang' and 'source_code' are required")
-
     job_id = job_id_counter
     job_id_counter += 1
 
