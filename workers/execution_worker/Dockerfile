@@ -9,9 +9,10 @@
 FROM my-ubuntu-image
 
 WORKDIR /worker
+COPY requirements.txt ./requirements.txt
+RUN pip3 install -r requirements.txt
+
 
 COPY . /worker/execution_worker
-
-RUN pip3 install -r execution_worker/requirements.txt
 
 CMD ["python3","-u", "-m", "execution_worker.rabbitmq"]

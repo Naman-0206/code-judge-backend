@@ -1,7 +1,4 @@
-import json
 import pika
-import sys
-import time
 from redis_client import r
 
 connection = pika.BlockingConnection(pika.ConnectionParameters(host = 'remotecodeexecution-rabbitmq-1',

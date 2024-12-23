@@ -21,6 +21,8 @@ services:
 
   server:
     build: "./server"
+    volumes:
+      - "./server:/server"
     restart: unless-stopped
     ports:
       - "8000:8000"
@@ -32,7 +34,9 @@ services:
     ]
 
   submission-worker:
-    build: ./submission_worker
+    build: ./workers/submission_worker
+    volumes:
+      - "./workers/submission_worker:/worker/submission_worker"
     restart: unless-stopped
     scale: 1
     depends_on: [
@@ -42,7 +46,9 @@ services:
       - app_network
   
   execution-worker:
-    build: ./execution_worker
+    build: ./workers/execution_worker
+    volumes:
+      - "./workers/execution_worker:/worker/execution_worker"
     restart: unless-stopped
     scale: 1
     depends_on: [
