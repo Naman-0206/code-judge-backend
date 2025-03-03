@@ -1,4 +1,7 @@
 pika
 redis[hiredis]
-fastapi
 uvicorn
+tortoise-orm
+aiosqlite
+fastapi
+aerich
