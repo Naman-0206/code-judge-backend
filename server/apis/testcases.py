@@ -60,7 +60,7 @@ async def get_private_testcases(question_id: UUID):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.post("/{question_id}/testcases", response_model=Testcase_Pydantic)
-async def create_testcase(question_id: UUID, testcase: Testcase_PydanticIn):
+async def create_testcase(question_id: UUID, testcase: Testcase_PydanticIn): # type: ignore
     """Create a new testcase for a given question."""
     try:
         question = await Question.get_or_none(id=question_id)
@@ -109,7 +109,7 @@ async def get_testcase(question_id: UUID, id: int):
 
 
 @router.put("/{question_id}/testcases/{id}", response_model=Testcase_Pydantic)
-async def update_testcase(question_id: UUID, id: int, testcase: Testcase_PydanticIn):
+async def update_testcase(question_id: UUID, id: int, testcase: Testcase_PydanticIn): # type: ignore
     """Update an existing testcase for a given question."""
     try:
         question = await Question.get_or_none(id=question_id)
