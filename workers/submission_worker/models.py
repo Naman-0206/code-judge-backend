@@ -1,7 +1,7 @@
 from dataclasses import dataclass, asdict, field
 from enum import Enum
 import json
-from typing import List
+from typing import List, TypedDict
 
 
 def get_supported_lang() -> List[str]:
@@ -9,18 +9,22 @@ def get_supported_lang() -> List[str]:
     return file_extensions
 
 
+class TestCase(TypedDict):
+    input_url: str
+    output_url: str
+
+
 @dataclass()
 class Event:
-    job_id: int
+    job_id: str
     lang: str
     source_code: str
-    input: str
-    expected_output: str
+    test_cases: List[TestCase]
     time_limit: int = field(default=5)  # Default to 5 seconds
     memory_limit: int = field(default=512)  # Default to 512 MB
 
     def __post_init__(self):
-        if not isinstance(self.job_id, int):
+        if not isinstance(self.job_id, str):
             raise TypeError(f"job_id must be an int, got {type(self.job_id).__name__}")
         if not isinstance(self.lang, str):
             raise TypeError(f"lang must be a str, got {type(self.lang).__name__}")

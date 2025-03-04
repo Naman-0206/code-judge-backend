@@ -11,7 +11,7 @@ def get_supported_lang() -> List[str]:
 
 @dataclass()
 class ExecutionEvent:
-    job_id: int
+    job_id: str
     lang: str
     source_code: str
     input: str
@@ -19,8 +19,8 @@ class ExecutionEvent:
     memory_limit: int = field(default=512)  # Default to 512 MB
 
     def __post_init__(self):
-        if not isinstance(self.job_id, int):
-            raise TypeError(f"job_id must be an int, got {type(self.job_id).__name__}")
+        if not isinstance(self.job_id, str):
+            raise TypeError(f"job_id must be an str, got {type(self.job_id).__name__}")
         if not isinstance(self.lang, str):
             raise TypeError(f"lang must be a str, got {type(self.lang).__name__}")
         if not isinstance(self.source_code, str):

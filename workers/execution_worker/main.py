@@ -29,7 +29,7 @@ def execute_code(event: ExecutionEvent):
     
     if exit_code != 0:
         shutil.rmtree(working_dir)
-        return exit_code, output, errors
+        return exit_code, output, errors, runtime
 
     shutil.rmtree(working_dir)
 
@@ -63,7 +63,6 @@ def event_callback(ch, method, properties, body):
             error_msg = handle_error(job_id, 402)
             save_result(job_id, error_msg)
         ch.basic_ack(delivery_tag=method.delivery_tag)
-        return
     
     print("Received: ", event.job_id)
     
@@ -90,6 +89,7 @@ def event_callback(ch, method, properties, body):
         print(e)
         error_msg = handle_error(job_id, 500)   
         save_result(job_id, error_msg) 
+        raise e
         
     finally:
         ch.basic_ack(delivery_tag=method.delivery_tag)
