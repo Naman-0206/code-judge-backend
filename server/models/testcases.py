@@ -27,6 +27,4 @@ class Testcase(models.Model):
 # Pydantic Models for Serialization
 Testcase_Pydantic = pydantic_model_creator(Testcase, name="Testcase")
 Testcase_PydanticIn = pydantic_model_creator(Testcase, name="TestcaseIn", exclude_readonly=True)
-
-
-
+Testcase_List_Pydantic = pydantic_model_creator(Testcase, name="TestcaseList", exclude=("question",), include=("id", "created_at", "updated_at", "type"))

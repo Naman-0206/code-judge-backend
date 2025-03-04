@@ -12,7 +12,11 @@ class Question(models.Model):
     # creator = fields.ForeignKeyField("models.User", related_name="questions")
     # modrators = fields.ManyToManyField("models.User", related_name="moderated_questions")
 
-    # testcases = fields.ReverseRelation["Testcase"]
+    # tags = fields.ManyToManyField("models.Tag", related_name="questions")
+    # difficulty = fields.IntField(default=0)
+
+    # timelimit = fields.IntField(default=5)
+    # memorylimit = fields.IntField(default=512)
 
     def __str__(self):
         return f"{self.id} - {self.title}"

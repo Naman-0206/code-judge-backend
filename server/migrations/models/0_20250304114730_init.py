@@ -10,6 +10,14 @@ async def upgrade(db: BaseDBAsyncClient) -> str:
     "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+CREATE TABLE IF NOT EXISTS "submissions" (
+    "id" CHAR(36) NOT NULL PRIMARY KEY,
+    "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "verdict" VARCHAR(21) NOT NULL DEFAULT 'Running...' /* AC: Accepted\nWA: Wrong Answer\nTLE: Time Limit Exceeded\nMLE: Memory Limit Exceeded\nCE: Compilation Error\nRE: Runtime Error\nSE: Segmentation Fault\nOLE: Output Limit Exceeded\nPE: Presentation Error\nIE: Internal Error\nRUN: Running... */,
+    "language" VARCHAR(6) NOT NULL /* C: C\nCPP: CPP\nPYTHON: PYTHON */,
+    "code" TEXT NOT NULL,
+    "question_id" CHAR(36) NOT NULL REFERENCES "questions" ("id") ON DELETE CASCADE
+);
 CREATE TABLE IF NOT EXISTS "testcases" (
     "id" CHAR(36) NOT NULL PRIMARY KEY,
     "input_url" VARCHAR(511) NOT NULL,

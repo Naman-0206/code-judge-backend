@@ -1,10 +1,10 @@
+from typing import List
 from fastapi import APIRouter, HTTPException
 from tortoise.exceptions import DoesNotExist, OperationalError
-from models import Testcase, Testcase_Pydantic, Testcase_PydanticIn, Question, TestcaseType
+from models import Testcase, Testcase_Pydantic, Testcase_PydanticIn, Question, TestcaseType, Testcase_List_Pydantic
 from uuid import UUID
 import logging
 
-# Set up logging for debugging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -13,6 +13,7 @@ router = APIRouter(tags=["testcases"])
 
 @router.get("/{question_id}/sample_testcases", response_model=list[Testcase_Pydantic])
 async def get_sample_testcases(question_id: UUID):
+    # TODO: Sort by created_at
     """Retrieve all testcases for a given question."""
     try:
         question = await Question.get_or_none(id=question_id)
@@ -29,6 +30,7 @@ async def get_sample_testcases(question_id: UUID):
 
 @router.get("/{question_id}/public_testcases", response_model=list[Testcase_Pydantic])
 async def get_public_testcases(question_id: UUID):
+    # TODO: Sort by created_at
     """Retrieve all testcases for a given question."""
     try:
         question = await Question.get_or_none(id=question_id)
@@ -45,6 +47,7 @@ async def get_public_testcases(question_id: UUID):
 
 @router.get("/{question_id}/private_testcases", response_model=list[Testcase_Pydantic])
 async def get_private_testcases(question_id: UUID):
+    # TODO: Sort by created_at
     """Retrieve all testcases for a given question."""
     try:
         question = await Question.get_or_none(id=question_id)
@@ -52,6 +55,23 @@ async def get_private_testcases(question_id: UUID):
         if not question:
             raise HTTPException(status_code=404, detail=f"Question with ID {question_id} not found or you don't have access")
         testcases = await Testcase_Pydantic.from_queryset(Testcase.filter(question=question, type = TestcaseType.private))
+        return testcases
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions
+    except Exception as e:
+        logger.error(f"Error fetching testcases for question {question_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.get("/{question_id}/testcases", response_model=List[Testcase_List_Pydantic])
+async def get_testcases(question_id: UUID):
+    """Retrieve all testcases for a given question."""
+    # TODO: Sort by created_at
+    try:
+        question = await Question.get_or_none(id=question_id)
+        # TODO: Check if user has access to this question
+        if not question:
+            raise HTTPException(status_code=404, detail=f"Question with ID {question_id} not found or you don't have access")    
+        testcases = await Testcase_List_Pydantic.from_queryset(Testcase.filter(question=question))
         return testcases
     except HTTPException:
         raise  # Re-raise HTTP exceptions
@@ -87,7 +107,7 @@ async def create_testcase(question_id: UUID, testcase: Testcase_PydanticIn): # t
 
 
 @router.get("/{question_id}/testcases/{id}", response_model=Testcase_Pydantic)
-async def get_testcase(question_id: UUID, id: int):
+async def get_testcase(question_id: UUID, id: UUID):
     """Retrieve a specific testcase for a given question."""
     try:
         question = await Question.get_or_none(id=question_id)
