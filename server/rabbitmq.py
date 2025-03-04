@@ -1,5 +1,5 @@
 import pika
-from redis_client import r
+from _redis import redis_client
 import os
 import logging
 from pika.exceptions import AMQPChannelError
@@ -93,33 +93,3 @@ class RabbitMQ():
 
 rabbit = RabbitMQ()
 
-
-# connection = pika.BlockingConnection(pika.ConnectionParameters(host=os.getenv("RABBITMQ_HOST"),
-#                                                                port=os.getenv("RABBITMQ_PORT")))
-# channel = connection.channel()
-
-# submit_queue = 'task_queue'
-# channel.queue_declare(queue=submit_queue, durable=True)
-
-# execution_queue = 'execution_queue'
-# channel.queue_declare(queue=execution_queue, durable=True)
-sample_event_c = {
-    # "job_id": 1,
-    # "lang": "cpp",
-    "source_code": """
-#include <stdio.h>
-
-int main() {
-    int a, b, c;
-    scanf("%d", &a);
-    scanf("%d", &b);
-    scanf("%d", &c);
-    printf("%d\\n%d\\n%d\\n", a, b, c);
-    return 0;
-}
-""",
-    "time_limit": 5,  # in seconds
-    "memory_limit": 512,  # in MB
-    "input": "1\n5\n3",
-    "expected_output": "1\n5\n3",
-}
