@@ -9,7 +9,7 @@ connection = pika.BlockingConnection(pika.ConnectionParameters(
     os.getenv("RABBITMQ_HOST"), os.getenv("RABBITMQ_PORT")))
 channel = connection.channel()
 
-queue_name = 'task_queue'
+queue_name = 'submission_queue'
 channel.queue_declare(queue=queue_name, durable=True)
 
 # Ensures one message is processed at a time

@@ -1,8 +1,8 @@
 import json
 import shutil
 from submission_worker import working_dir
-from submission_worker.utils import compare_files, create_files
-from submission_worker.executors import lang_runners
+from workers.executor.utils import compare_files, create_files
+from workers.executor.executors import lang_runners
 from submission_worker.constants import exit_codes
 from submission_worker.models import Event
 from submission_worker.redis_client import save_result

@@ -5,7 +5,7 @@ from typing import List, TypedDict
 
 
 def get_supported_lang() -> List[str]:
-    from submission_worker.executors import file_extensions
+    from workers.executor.executors import file_extensions
     return file_extensions
 
 
@@ -19,7 +19,7 @@ class Event:
     job_id: str
     lang: str
     source_code: str
-    test_cases: List[TestCase]
+    question_id: str
     time_limit: int = field(default=5)  # Default to 5 seconds
     memory_limit: int = field(default=512)  # Default to 512 MB
 
@@ -34,12 +34,10 @@ class Event:
             raise TypeError(f"time_limit must be an int, got {type(self.time_limit).__name__}")
         if not isinstance(self.memory_limit, int):
             raise TypeError(f"memory_limit must be an int, got {type(self.memory_limit).__name__}")
-        if not isinstance(self.input, str):
-            raise TypeError(f"input must be a str, got {type(self.input).__name__}")
-        if not isinstance(self.expected_output, str):
-            raise TypeError(f"expected_output must be a str, got {type(self.expected_output).__name__}")
-        
-        if self.lang not in get_supported_lang():
+        if not isinstance(self.question_id, str):
+            raise TypeError(f"question_id must be an str, got {type(self.question_id).__name__}")
+    
+        if self.lang not in get_supported_lang():   
             raise ValueError(f"Invalid language: {self.lang}")
         
         self.file_extension = get_supported_lang()[self.lang]
