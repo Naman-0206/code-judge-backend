@@ -7,6 +7,7 @@ from core.db import get_session
 from models.submissions import Submission
 from models.questions import Question
 from schemas.submissions import SubmissionRead, SubmissionCreate
+import services.submission as submissionService
 import logging
 
 
@@ -106,9 +107,8 @@ def submit_code(
         session.commit()
         session.refresh(db_submission)
 
-        # TODO: Add the submission to the queue
         # Step 4: add the submission to the queue
-        # ...
+        submissionService.submit_code(db_submission)
 
         return db_submission
 
@@ -118,3 +118,17 @@ def submit_code(
     except Exception as e:
         logger.error(f"Error submitting code for question {question_id}: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error while submitting code.")
+    
+@router.get("/check/{submission_id}")
+def check(submission_id: int):
+    try:
+        res = submissionService.check(submission_id)
+        if not res:
+            raise HTTPException(status_code=404, detail="Submission not found.")
+        return res
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        logger.error(f"Error retrieving submission {submission_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error while retrieving submission.")
