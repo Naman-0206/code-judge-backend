@@ -11,8 +11,6 @@ class Testcase(TimeStampMixin, SQLModel, table=True):
     id: int = Field(primary_key=True)
     input: str
     output: str
-    time_limit: Optional[int] = Field(default=None)
-    memory_limit: Optional[int] = Field(default=None)
     name: Optional[str] = Field(default=None, max_length=500)
     is_sample: bool = Field(default=False)
 

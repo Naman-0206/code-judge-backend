@@ -6,8 +6,6 @@ from datetime import datetime
 class TestcaseBase(SQLModel):
     input: str
     output: str
-    time_limit: Optional[int] = None
-    memory_limit: Optional[int] = None
     name: Optional[str] = None
     is_sample: bool = False
 
@@ -27,7 +25,5 @@ class TestcaseRead(TestcaseBase):
 class TestcaseUpdate(SQLModel):
     input: Optional[str] = None
     output: Optional[str] = None
-    time_limit: Optional[int] = None
-    memory_limit: Optional[int] = None
     name: Optional[str] = None
     is_sample: Optional[bool] = None

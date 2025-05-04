@@ -15,6 +15,8 @@ class Question(TimeStampMixin, SQLModel, table=True):
     id: UUID = Field(primary_key=True, default_factory=uuid4)
     title: str
     body: str
+    time_limit: Optional[int] = Field(default=10)
+    memory_limit: Optional[int] = Field(default=512)
 
     # One-to-many relationship: One Question has many Testcases
     testcases: List["Testcase"] = Relationship(

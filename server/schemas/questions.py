@@ -8,6 +8,8 @@ class QuestionBase(SQLModel):
     title: str
     body: str
     creator_id: UUID
+    time_limit: Optional[int] = 10
+    memory_limit: Optional[int] = 512
 
 
 class QuestionCreate(QuestionBase):
@@ -17,6 +19,8 @@ class QuestionCreate(QuestionBase):
 class QuestionUpdate(SQLModel):
     title: Optional[str] = None
     body: Optional[str] = None
+    time_limit: Optional[int] = None
+    memory_limit: Optional[int] = None
 
 
 class QuestionRead(QuestionBase):
