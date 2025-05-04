@@ -10,6 +10,7 @@ router = APIRouter(tags=["questions"])
 
 @router.get("/", response_model=list[QuestionRead])
 def get_questions(session: Session = Depends(get_session)):
+    # TODO: Add pagination
     questions = session.exec(select(Question)).all()
     return questions
 
