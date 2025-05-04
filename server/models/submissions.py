@@ -1,48 +1,37 @@
-from tortoise import fields, models
-from tortoise.contrib.pydantic import pydantic_model_creator
-from models.questions import Question
-from enum import Enum
+from datetime import datetime
+from typing import Optional, TYPE_CHECKING
+from uuid import UUID
+from sqlmodel import DateTime, SQLModel, Field, Relationship, func
+from sqlalchemy import JSON, Column
+import datetime as dt
 
-class SubmissionVerdict(str, Enum):
-    AC = "Accepted"
-    WA = "Wrong Answer"
-    TLE = "Time Limit Exceeded"
-    MLE = "Memory Limit Exceeded"
-    CE = "Compilation Error"
-    RE = "Runtime Error"
-    SE = "Segmentation Fault"
-    OLE = "Output Limit Exceeded"
-    PE = "Presentation Error"
-    IE = "Internal Error"
-    RUN = "Running..."
-
-class SubmissionLanguage(str, Enum):
-    C = "C"
-    CPP = "CPP"
-    PYTHON = "PYTHON"
+if TYPE_CHECKING:
+    from .users import User
+    from .questions import Question
 
 
-class Submission(models.Model):
-    id = fields.UUIDField(pk=True)
-    question = fields.ForeignKeyField("models.Question", related_name="submissions", on_delete=fields.CASCADE)
-    created_at = fields.DatetimeField(auto_now_add=True)
-    verdict = fields.CharEnumField(SubmissionVerdict, default=SubmissionVerdict.RUN, max_length=21)
-    language = fields.CharEnumField(SubmissionLanguage, max_length=6)
-    code = fields.TextField()
+class Submission(SQLModel, table=True):
+    __tablename__ = "submissions"
 
-    # creator = fields.ForeignKeyField("models.User", related_name="submissions", on_delete=fields.CASCADE)
+    id: int = Field(primary_key=True)
+    creator_id: UUID = Field(foreign_key="users.id")
+    question_id: Optional[UUID] = Field(
+        foreign_key="questions.id", sa_column_kwargs={"on_delete": "SET NULL"}
+    )
+    verdict: Optional[str]
+    score: Optional[int]
+    language: str
+    source_code: str
 
-    def __str__(self):
-        return f"Submission {self.id} for Question {self.question}"
-    
-    class Meta:
-        table = "submissions"
+    result: Optional[dict] = Field(
+        default_factory=dict,
+        sa_column=Column(JSON)
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(dt.timezone.utc),
+        sa_column=Column(DateTime(timezone=True), server_default=func.now())
+    )
 
-# Pydantic Models for Serialization
-Submission_Pydantic = pydantic_model_creator(Submission, name="Submission")
-Submission_PydanticIn = pydantic_model_creator(Submission, name="SubmissionIn", include=("code", "language"), exclude_readonly=True)
-Submission_List_Pydantic = pydantic_model_creator(
-    Submission,
-    name="SubmissionList",
-    include=("id", "question", "created_at", "verdict", "language")  # Only these fields for list endpoint
-)
+    # Relationships
+    creator: Optional["User"] = Relationship(back_populates="submissions")
+    question: Optional["Question"] = Relationship(back_populates="submissions")

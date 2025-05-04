@@ -1,30 +1,22 @@
-from tortoise import fields, models
-from tortoise.contrib.pydantic import pydantic_model_creator
-from models.questions import Question
-from enum import Enum
+from uuid import UUID
+from sqlmodel import Field, SQLModel, Relationship
+from typing import Optional, List
+from datetime import datetime
+from .questions import Question
+from .mixins import TimeStampMixin
 
-class TestcaseType(str, Enum):
-    public = "Public"
-    private = "Private"
-    sample = "Sample"
+class Testcase(TimeStampMixin, SQLModel, table=True):
+    __tablename__ = "testcases"
 
-class Testcase(models.Model):
-    id = fields.UUIDField(pk=True)
-    question = fields.ForeignKeyField("models.Question", related_name="testcases", on_delete=fields.CASCADE)
-    input_url = fields.CharField(max_length=511)
-    output_url = fields.CharField(max_length=511)
-    created_at = fields.DatetimeField(auto_now_add=True)
-    updated_at = fields.DatetimeField(auto_now=True)
-    
-    type = fields.CharEnumField(TestcaseType, default=TestcaseType.sample, max_length=7)
+    id: int = Field(primary_key=True)
+    input_url: str
+    output_url: str
+    time_limit: Optional[int] = Field(default=None)
+    memory_limit: Optional[int] = Field(default=None)
+    name: Optional[str] = Field(default=None, max_length=500)
+    is_sample: bool = Field(default=False)
 
-    def __str__(self):
-        return f"Testcase {self.id} for Question {self.question}"
-    
-    class Meta:
-        table = "testcases"
+    question_id: UUID = Field(foreign_key="questions.id")
 
-# Pydantic Models for Serialization
-Testcase_Pydantic = pydantic_model_creator(Testcase, name="Testcase")
-Testcase_PydanticIn = pydantic_model_creator(Testcase, name="TestcaseIn", exclude_readonly=True)
-Testcase_List_Pydantic = pydantic_model_creator(Testcase, name="TestcaseList", exclude=("question",), include=("id", "created_at", "updated_at", "type"))
+    # Many-to-one relationship: Each Testcase belongs to one Question
+    question: Optional[Question] = Relationship(back_populates="testcases")

@@ -1,29 +1,29 @@
-from tortoise import fields, models
-from tortoise.contrib.pydantic import pydantic_model_creator
+from typing import Optional, List, TYPE_CHECKING
+from uuid import UUID, uuid4
+from sqlmodel import Field, SQLModel, Relationship
+from .mixins import TimeStampMixin
+
+if TYPE_CHECKING:
+    from .users import User
+    from .testcases import Testcase
+    from .submissions import Submission
 
 
-class Question(models.Model):
-    id = fields.UUIDField(pk=True)
-    title = fields.CharField(max_length=255)
-    content = fields.TextField()
-    created_at = fields.DatetimeField(auto_now_add=True)
-    updated_at = fields.DatetimeField(auto_now=True)
-    
-    # creator = fields.ForeignKeyField("models.User", related_name="questions")
-    # modrators = fields.ManyToManyField("models.User", related_name="moderated_questions")
+class Question(TimeStampMixin, SQLModel, table=True):
+    __tablename__ = "questions"
 
-    # tags = fields.ManyToManyField("models.Tag", related_name="questions")
-    # difficulty = fields.IntField(default=0)
+    id: UUID = Field(primary_key=True, default_factory=uuid4)
+    title: str
+    body: str
 
-    # timelimit = fields.IntField(default=5)
-    # memorylimit = fields.IntField(default=512)
+    # One-to-many relationship: One Question has many Testcases
+    testcases: List["Testcase"] = Relationship(
+        back_populates="question",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"}
+    )
 
-    def __str__(self):
-        return f"{self.id} - {self.title}"
-    
-    class Meta:
-        table = "questions"
+    # One-to-many relationship: One Question has many Submissions
+    submissions: List["Submission"] = Relationship(back_populates="question")
 
-# Pydantic Models for Serialization
-Question_Pydantic = pydantic_model_creator(Question, name="Question")
-Question_PydanticIn = pydantic_model_creator(Question, name="QuestionIn", exclude_readonly=True)
+    creator_id: UUID = Field(foreign_key="users.id")
+    creator: Optional["User"] = Relationship(back_populates="questions")

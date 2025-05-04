@@ -16,3 +16,7 @@ testcases are in memory make them in disk
 rabbitmq heartbeat check
 
 use compiled version
+
+return execution time and memory use
+
+start rabbitmq before anything else

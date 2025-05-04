@@ -1,4 +1,4 @@
-from submission_worker.utils import run_command
+from workers.executor.utils import run_command
 from submission_worker import working_dir
 
 def execute_python_code(source_file, input_file, output_file, error_file, timeout=5, memory_limit=512):

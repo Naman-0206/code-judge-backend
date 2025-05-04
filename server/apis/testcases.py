@@ -1,9 +1,14 @@
 from typing import List
-from fastapi import APIRouter, HTTPException
-from tortoise.exceptions import DoesNotExist, OperationalError
-from models import Testcase, Testcase_Pydantic, Testcase_PydanticIn, Question, TestcaseType, Testcase_List_Pydantic
+from fastapi import APIRouter, HTTPException, Depends
+from sqlmodel import Session, select
+from sqlalchemy.exc import SQLAlchemyError
 from uuid import UUID
 import logging
+
+from models.testcases import Testcase
+from schemas.testcases import TestcaseCreate, TestcaseRead, TestcaseUpdate
+from db import get_session
+from models.questions import Question
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -11,174 +16,94 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["testcases"])
 
 
-@router.get("/{question_id}/sample_testcases", response_model=list[Testcase_Pydantic])
-async def get_sample_testcases(question_id: UUID):
-    # TODO: Sort by created_at
-    """Retrieve all testcases for a given question."""
+@router.get("/{question_id}/sample_testcases", response_model=List[TestcaseRead])
+async def get_sample_testcases(question_id: UUID, session: Session = Depends(get_session)):
     try:
-        question = await Question.get_or_none(id=question_id)
-        # TODO: Check if user has access to this question
-        if not question:
-            raise HTTPException(status_code=404, detail=f"Question with ID {question_id} not found or you don't have access")
-        testcases = await Testcase_Pydantic.from_queryset(Testcase.filter(question=question, type = TestcaseType.sample))
+        testcases = session.exec(
+            select(Testcase).where(Testcase.question_id == question_id, Testcase.is_sample == True)
+        ).all()
         return testcases
-    except HTTPException:
-        raise  # Re-raise HTTP exceptions
-    except Exception as e:
-        logger.error(f"Error fetching testcases for question {question_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+    except SQLAlchemyError as e:
+        logger.exception(f"Database error while retrieving sample testcases for question {question_id}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
-@router.get("/{question_id}/public_testcases", response_model=list[Testcase_Pydantic])
-async def get_public_testcases(question_id: UUID):
-    # TODO: Sort by created_at
-    """Retrieve all testcases for a given question."""
+
+@router.get("/{question_id}/testcases", response_model=List[TestcaseRead])
+async def get_testcases(question_id: UUID, session: Session = Depends(get_session)):
+    # TODO: Add pagination
     try:
-        question = await Question.get_or_none(id=question_id)
-        # TODO: Check if user has access to this question
-        if not question:
-            raise HTTPException(status_code=404, detail=f"Question with ID {question_id} not found or you don't have access")
-        testcases = await Testcase_Pydantic.from_queryset(Testcase.filter(question=question, type = TestcaseType.public))
+        # TODO: Only creator can see all testcases
+        testcases = session.exec(
+            select(Testcase).where(Testcase.question_id == question_id)
+        ).all()
         return testcases
-    except HTTPException:
-        raise  # Re-raise HTTP exceptions
-    except Exception as e:
-        logger.error(f"Error fetching testcases for question {question_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+    except SQLAlchemyError as e:
+        logger.exception(f"Database error while retrieving testcases for question {question_id}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
-@router.get("/{question_id}/private_testcases", response_model=list[Testcase_Pydantic])
-async def get_private_testcases(question_id: UUID):
-    # TODO: Sort by created_at
-    """Retrieve all testcases for a given question."""
+
+@router.post("/{question_id}/testcases", response_model=TestcaseRead)
+async def create_testcase(question_id: UUID, testcase: TestcaseCreate, session: Session = Depends(get_session)):
     try:
-        question = await Question.get_or_none(id=question_id)
-        # TODO: Check if user has access to this question and can view private testcases
+        question = session.get(Question, question_id)
         if not question:
-            raise HTTPException(status_code=404, detail=f"Question with ID {question_id} not found or you don't have access")
-        testcases = await Testcase_Pydantic.from_queryset(Testcase.filter(question=question, type = TestcaseType.private))
-        return testcases
-    except HTTPException:
-        raise  # Re-raise HTTP exceptions
-    except Exception as e:
-        logger.error(f"Error fetching testcases for question {question_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+            raise HTTPException(status_code=404, detail="Question not found")
+        
+        db_testcase = Testcase(**testcase.model_dump(), question_id=question_id)
+        session.add(db_testcase)
+        session.commit()
+        session.refresh(db_testcase)
+        return db_testcase
+    except SQLAlchemyError as e:
+        logger.exception(f"Error creating testcase for question {question_id}")
+        session.rollback()
+        raise HTTPException(status_code=500, detail="Could not create testcase")
 
-@router.get("/{question_id}/testcases", response_model=List[Testcase_List_Pydantic])
-async def get_testcases(question_id: UUID):
-    """Retrieve all testcases for a given question."""
-    # TODO: Sort by created_at
+
+@router.get("/{question_id}/testcases/{id}", response_model=TestcaseRead)
+async def get_testcase(question_id: UUID, id: int, session: Session = Depends(get_session)):
     try:
-        question = await Question.get_or_none(id=question_id)
-        # TODO: Check if user has access to this question
-        if not question:
-            raise HTTPException(status_code=404, detail=f"Question with ID {question_id} not found or you don't have access")    
-        testcases = await Testcase_List_Pydantic.from_queryset(Testcase.filter(question=question))
-        return testcases
-    except HTTPException:
-        raise  # Re-raise HTTP exceptions
-    except Exception as e:
-        logger.error(f"Error fetching testcases for question {question_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        testcase = session.get(Testcase, id)
+        if not testcase or testcase.question_id != question_id:
+            raise HTTPException(status_code=404, detail="Testcase not found for this question.")
+        return testcase
+    except SQLAlchemyError as e:
+        logger.exception(f"Error retrieving testcase {id} for question {question_id}")
+        raise HTTPException(status_code=500, detail="Could not retrieve testcase")
 
-@router.post("/{question_id}/testcases", response_model=Testcase_Pydantic)
-async def create_testcase(question_id: UUID, testcase: Testcase_PydanticIn): # type: ignore
-    """Create a new testcase for a given question."""
+
+@router.put("/{question_id}/testcases/{id}", response_model=TestcaseRead)
+async def update_testcase(question_id: UUID, id: int, testcase: TestcaseUpdate, session: Session = Depends(get_session)):
     try:
-        question = await Question.get_or_none(id=question_id)
-        # TODO: Check if user has access to this question
-        if not question:
-            raise HTTPException(status_code=404, detail=f"Question with ID {question_id} not found or you don't have access")
+        db_testcase = session.get(Testcase, id)
+        if not db_testcase or db_testcase.question_id != question_id:
+            raise HTTPException(status_code=404, detail="Testcase not found for this question.")
 
-        # Remove question_id from testcase data if present, as it's provided in the path
-        testcase_data = testcase.dict(exclude_unset=True)
-        if "question_id" in testcase_data:
-            del testcase_data["question_id"]  # Avoid duplicate assignment
+        testcase_data = testcase.model_dump(exclude_unset=True)
+        for key, value in testcase_data.items():
+            setattr(db_testcase, key, value)
 
-        # Assign the question object directly to question_id
-        obj = await Testcase.create(question=question, **testcase_data)
-        return await Testcase_Pydantic.from_tortoise_orm(obj)
-    except HTTPException:
-        raise
-    except OperationalError as e:
-        logger.error(f"Database error creating testcase: {str(e)}")
-        raise HTTPException(status_code=500, detail="Database error occurred")
-    except Exception as e:
-        logger.error(f"Unexpected error creating testcase: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-
-@router.get("/{question_id}/testcases/{id}", response_model=Testcase_Pydantic)
-async def get_testcase(question_id: UUID, id: UUID):
-    """Retrieve a specific testcase for a given question."""
-    try:
-        question = await Question.get_or_none(id=question_id)
-        # TODO: Check if user has access to this question
-        if not question:
-            raise HTTPException(status_code=404, detail=f"Question with ID {question_id} not found or you don't have access")
-
-        obj = await Testcase.get_or_none(id=id, question=question)
-        if not obj:
-            raise HTTPException(status_code=404, detail=f"Testcase with ID {id} not found for question {question_id}")
-        return await Testcase_Pydantic.from_tortoise_orm(obj)
-    except HTTPException:
-        raise
-    except DoesNotExist:
-        raise HTTPException(status_code=404, detail=f"Testcase with ID {id} not found")
-    except Exception as e:
-        logger.error(f"Error fetching testcase {id} for question {question_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-
-@router.put("/{question_id}/testcases/{id}", response_model=Testcase_Pydantic)
-async def update_testcase(question_id: UUID, id: int, testcase: Testcase_PydanticIn): # type: ignore
-    """Update an existing testcase for a given question."""
-    try:
-        question = await Question.get_or_none(id=question_id)
-        # TODO: Check if user has access to this question
-        if not question:
-            raise HTTPException(status_code=404, detail=f"Question with ID {question_id} not found or you don't have access")
-
-        obj = await Testcase.get_or_none(id=id, question=question)
-        if not obj:
-            raise HTTPException(status_code=404, detail=f"Testcase with ID {id} not found for question {question_id}")
-
-        # Remove question_id from update data if present (it's immutable in this context)
-        update_data = testcase.dict(exclude_unset=True)
-        if "question_id" in update_data:
-            del update_data["question_id"]
-
-        await obj.update_from_dict(update_data)
-        await obj.save()
-        return await Testcase_Pydantic.from_tortoise_orm(obj)
-    except HTTPException:
-        raise
-    except OperationalError as e:
-        logger.error(f"Database error updating testcase {id}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Database error occurred")
-    except Exception as e:
-        logger.error(f"Error updating testcase {id} for question {question_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        session.add(db_testcase)
+        session.commit()
+        session.refresh(db_testcase)
+        return db_testcase
+    except SQLAlchemyError as e:
+        logger.exception(f"Error updating testcase {id} for question {question_id}")
+        session.rollback()
+        raise HTTPException(status_code=500, detail="Could not update testcase")
 
 
 @router.delete("/{question_id}/testcases/{id}")
-async def delete_testcase(question_id: UUID, id: int):
-    """Delete a specific testcase for a given question."""
+async def delete_testcase(question_id: UUID, id: int, session: Session = Depends(get_session)):
     try:
-        question = await Question.get_or_none(id=question_id)
-        # TODO: Check if user has access to this question
-        if not question:
-            raise HTTPException(status_code=404, detail=f"Question with ID {question_id} not found or you don't have access")
+        testcase = session.get(Testcase, id)
+        if not testcase or testcase.question_id != question_id:
+            raise HTTPException(status_code=404, detail="Testcase not found for this question.")
 
-        obj = await Testcase.get_or_none(id=id, question=question)
-        if not obj:
-            raise HTTPException(status_code=404, detail=f"Testcase with ID {id} not found for question {question_id}")
-
-        await obj.delete()
-        return {"detail": f"Testcase {id} deleted successfully"}
-    except HTTPException:
-        raise
-    except OperationalError as e:
-        logger.error(f"Database error deleting testcase {id}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Database error occurred")
-    except Exception as e:
-        logger.error(f"Error deleting testcase {id} for question {question_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        session.delete(testcase)
+        session.commit()
+        return {"detail": "Testcase deleted successfully"}
+    except SQLAlchemyError as e:
+        logger.exception(f"Error deleting testcase {id} for question {question_id}")
+        session.rollback()
+        raise HTTPException(status_code=500, detail="Could not delete testcase")
