@@ -1,5 +1,5 @@
 import pika
-from _redis import redis_client
+from config._redis import redis_client
 import os
 import logging
 from pika.exceptions import AMQPChannelError

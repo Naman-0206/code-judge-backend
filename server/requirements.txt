@@ -1,7 +1,5 @@
 pika
 redis[hiredis]
 uvicorn
-tortoise-orm
-aiosqlite
 fastapi
-aerich
+sqlmodel
