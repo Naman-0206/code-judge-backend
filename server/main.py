@@ -1,11 +1,11 @@
 from fastapi import FastAPI
-from apis.execute import router as execution_router
-from apis.submission import router as submission_router
-from apis.questions import router as questions_router
-from apis.testcases import router as testcases_router
+from api.execute import router as execution_router
+from api.submission import router as submission_router
+from api.questions import router as questions_router
+from api.testcases import router as testcases_router
 from models.users import User
 
-from db import create_db_and_tables
+from core.db import create_db_and_tables
 
 app = FastAPI()
 

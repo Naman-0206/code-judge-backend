@@ -7,7 +7,7 @@ import logging
 
 from models.testcases import Testcase
 from schemas.testcases import TestcaseCreate, TestcaseRead, TestcaseUpdate
-from db import get_session
+from core.db import get_session
 from models.questions import Question
 
 logging.basicConfig(level=logging.INFO)

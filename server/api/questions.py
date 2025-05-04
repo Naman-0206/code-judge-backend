@@ -3,7 +3,7 @@ from sqlmodel import Session, select
 from uuid import UUID
 
 from models.questions import Question
-from db import get_session  
+from core.db import get_session  
 from schemas.questions import QuestionRead, QuestionCreate, QuestionUpdate
 
 router = APIRouter(tags=["questions"])

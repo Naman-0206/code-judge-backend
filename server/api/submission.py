@@ -3,7 +3,7 @@ from uuid import UUID
 from typing import Literal, Optional, List
 from sqlmodel import Session, select
 from sqlalchemy import desc, asc
-from db import get_session
+from core.db import get_session
 from models.submissions import Submission
 from models.questions import Question
 from schemas.submissions import SubmissionRead, SubmissionCreate
