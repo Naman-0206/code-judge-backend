@@ -1,7 +1,7 @@
 import json
 from fastapi import APIRouter, HTTPException
 from schemas.execute import ExecutionEvent
-from config.rabbitmq import rabbit
+from core.rabbitmq import rabbit
 from uuid import uuid4
 from config._redis import redis_client
 
