@@ -1,7 +1,9 @@
+from datetime import datetime
 from typing import Optional, TYPE_CHECKING
 from uuid import UUID
-from sqlmodel import SQLModel, Field, Relationship
+from sqlmodel import DateTime, SQLModel, Field, Relationship, func
 from sqlalchemy import JSON, Column
+import datetime as dt
 
 if TYPE_CHECKING:
     from .users import User
@@ -16,12 +18,18 @@ class Submission(SQLModel, table=True):
     question_id: Optional[UUID] = Field(
         foreign_key="questions.id", sa_column_kwargs={"on_delete": "SET NULL"}
     )
-    verdict: str
-    score: int
+    verdict: Optional[str]
+    score: Optional[int]
+    language: str
+    source_code: str
 
-    result: dict = Field(
+    result: Optional[dict] = Field(
         default_factory=dict,
         sa_column=Column(JSON)
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(dt.timezone.utc),
+        sa_column=Column(DateTime(timezone=True), server_default=func.now())
     )
 
     # Relationships

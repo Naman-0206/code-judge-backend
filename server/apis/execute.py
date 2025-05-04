@@ -1,6 +1,6 @@
 import json
 from fastapi import APIRouter, HTTPException
-from models.pydantic_models import ExecutionEvent
+from schemas.pydantic_models import ExecutionEvent
 from config.rabbitmq import rabbit
 from uuid import uuid4
 from config._redis import redis_client

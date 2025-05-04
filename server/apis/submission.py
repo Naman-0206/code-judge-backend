@@ -1,127 +1,120 @@
-import json
-from uuid import UUID, uuid4
-from fastapi import APIRouter, HTTPException, Query
-from models import Submission, Submission_List_Pydantic, Submission_Pydantic, Question, SubmissionVerdict, Submission_PydanticIn
-from models.pydantic_models import SubmissionEvent
-from typing import Optional, List
-from rabbitmq import rabbit
+from fastapi import APIRouter, Query, Depends, HTTPException
+from uuid import UUID
+from typing import Literal, Optional, List
+from sqlmodel import Session, select
+from sqlalchemy import desc, asc
+from db import get_session
+from models.submissions import Submission
+from models.questions import Question
+from schemas.submissions import SubmissionRead, SubmissionCreate
 import logging
 
-# Set up logging
+
+
+router = APIRouter(tags=["submissions"])
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["submissions"])
+def paginate(query, skip: int, limit: int):
+    return query.offset(skip).limit(limit)
 
-
-@router.get("/{question_id}/submissions", response_model=List[Submission_List_Pydantic])
-async def get_all_submissions(
+@router.get("/{question_id}/submissions", response_model=List[SubmissionRead])
+def get_all_submissions(
     question_id: UUID,
-    verdict: Optional[str] = Query(None, description="Filter by verdict (e.g., 'Accepted', 'Wrong Answer')"),
-    sort_by: Optional[str] = Query("created_at", description="Sort by field (e.g., 'created_at', 'verdict')"),
-    sort_order: Optional[str] = Query("desc", description="Sort order ('asc' or 'desc')")
+    verdict: Optional[str] = Query(None),
+    sort_by: Optional[str] = Query("created_at"),
+    sort_order: Literal["asc", "desc"] = Query("desc"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(10, le=100),
+    session: Session = Depends(get_session)
 ):
-    """
-    Retrieve all submissions for a given question with filters and sorting.
-    Returns only id, question, created_at, and verdict.
-    """
     try:
-        question = await Question.get_or_none(id=question_id)
-        # TODO: Check if user has access to this question
-        if not question:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Question with ID {question_id} not found or you don't have access"
-            )
-
-        queryset = Submission.filter(question=question).exclude(verdict="Running...")
+        query = select(Submission).where(Submission.question_id == question_id)
 
         if verdict:
-            verdict = verdict.capitalize()
-            if verdict not in SubmissionVerdict.__members__.values():
-                raise HTTPException(status_code=400, detail=f"Invalid verdict: {verdict}")
-            queryset = queryset.filter(verdict=verdict)
+            query = query.where(Submission.verdict == verdict)
 
-        # Sanitize sort_by and sort_order
-        allowed_sort_fields = {"created_at", "verdict"}
-        sort_by = sort_by.lower() if sort_by else "created_at"
-        if sort_by not in allowed_sort_fields:
-            raise HTTPException(status_code=400, detail=f"Invalid sort_by field: {sort_by}. Allowed: {allowed_sort_fields}")
+        if sort_order == "asc":
+            query = query.order_by(asc(sort_by))
+        elif sort_order == "desc":
+            query = query.order_by(desc(sort_by))
+        else:
+            raise HTTPException(status_code=400, detail="Invalid sort_order. Use 'asc' or 'desc'.")
 
-        sort_order = sort_order.lower() if sort_order else "desc"
-        if sort_order not in {"asc", "desc"}:
-            raise HTTPException(status_code=400, detail=f"Invalid sort_order: {sort_order}. Allowed: 'asc', 'desc'")
+        paginated_query = paginate(query, skip, limit)
+        
+        submissions = session.exec(paginated_query).all()
 
-        order_prefix = "" if sort_order == "asc" else "-"
-        queryset = queryset.order_by(f"{order_prefix}{sort_by}")
-
-        submissions = await Submission_List_Pydantic.from_queryset(queryset)
+        if not submissions:
+            raise HTTPException(status_code=404, detail="No submissions found for this question or filter.")
+        
         return submissions
 
-    except HTTPException:
-        raise
+    except HTTPException as e:
+        raise e
     except Exception as e:
-        logger.error(f"Error fetching submissions for question {question_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        logger.error(f"Error retrieving submissions for question {question_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error while retrieving submissions.")
 
-
-@router.get("/{question_id}/submissions/{submission_id}", response_model=Submission_Pydantic)
-async def get_submission(question_id: UUID, submission_id: UUID):
-    """
-    Retrieve details of a specific submission for a given question.
-    """
+@router.get("/{question_id}/submissions/{submission_id}", response_model=SubmissionRead)
+def get_submission(
+    question_id: UUID,
+    submission_id: int,
+    session: Session = Depends(get_session)
+):
     try:
-        question = await Question.get_or_none(id=question_id)
-        # TODO: Check if user has access to this question
-        if not question:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Question with ID {question_id} not found or you don't have access"
-            )
+        submission = session.get(Submission, submission_id)
 
-        submission = await Submission.get_or_none(id=submission_id, question=question)
         if not submission:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Submission with ID {submission_id} not found for question {question_id}"
-            )
+            raise HTTPException(status_code=404, detail="Submission not found.")
 
-        return await Submission_Pydantic.from_tortoise_orm(submission)
+        if submission.question_id != question_id:
+            raise HTTPException(status_code=404, detail="Submission does not belong to this question.")
 
-    except HTTPException:
-        raise
+        return submission
+
+    except HTTPException as e:
+        raise e
     except Exception as e:
-        logger.error(f"Error fetching submission {submission_id} for question {question_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
- 
- 
-@router.post("/{question_id}/submit", response_model=Submission_Pydantic)
-async def submit_code(question_id: UUID, submission: Submission_PydanticIn): # type: ignore
-    
-    question = await Question.get_or_none(id=question_id)
-    # TODO: Check if user has access to this question
-    if not question:
-        raise HTTPException(status_code=404, detail=f"Question with ID {question_id} not found or you don't have access")
+        logger.error(f"Error retrieving submission {submission_id} for question {question_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error while retrieving submission.")
 
 
-    submission_data = submission.dict(exclude_unset=True)
-    if "question_id" in submission_data:
-        del submission_data["question_id"]
+@router.post("/{question_id}/submit", response_model=SubmissionRead)
+def submit_code(
+    question_id: UUID,
+    submission: SubmissionCreate,
+    session: Session = Depends(get_session)
+):
+    try:
+        question = session.get(Question, question_id)
+        if not question:
+            raise HTTPException(status_code=404, detail="Question not found.")
 
+        db_submission = Submission(
+            language=submission.language,
+            source_code=submission.source_code,
+            creator_id=submission.creator_id,
+            question_id=question_id,
+            verdict="In Queue",
+            score=None,  # You can calculate score later based on the code evaluation
+            result={},  # Initial empty result or a default value
+        )
 
-    submission: Submission = await Submission.create(question=question, **submission_data)
+        # Step 3: Add the submission to the session and commit
+        session.add(db_submission)
+        session.commit()
+        session.refresh(db_submission)
 
-    job_id = submission.id
+        # TODO: Add the submission to the queue
+        # Step 4: add the submission to the queue
+        # ...
 
-    message = json.dumps({
-        "job_id": str(job_id), 
-        "lang": submission.language,
-        "source_code": submission.code,
-        "question_id": str(question_id),
-        "time_limit": 5, # in seconds
-        "memory_limit": 512, # in MB
-    })
+        return db_submission
 
-    rabbit.publish("submission_queue", message)
-    
-    return await Submission_Pydantic.from_tortoise_orm(submission)
+    except HTTPException as e:
+        # Handle HTTP exceptions (like Question not found)
+        raise e
+    except Exception as e:
+        logger.error(f"Error submitting code for question {question_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error while submitting code.")
