@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Literal, Optional, List
 from uuid import UUID
 from datetime import datetime
 from pydantic import BaseModel
@@ -7,12 +7,12 @@ from sqlmodel import SQLModel
 class SubmissionBase(BaseModel):
     verdict: Optional[str] = None
     score: Optional[int] = None
-    language: str
+    language: Literal["c", "cpp", "python"]
     source_code: str
     result: Optional[dict] = {}
 
 class SubmissionCreate(SQLModel):
-    language: str
+    language: Literal["c", "cpp", "python"]
     source_code: str
     creator_id: UUID
 
@@ -24,11 +24,3 @@ class SubmissionRead(SubmissionBase):
 
     class Config:
         from_attributes = True  # To use SQLModel's from_attributes feature
-
-
-class SubmissionUpdate(SQLModel):
-    verdict: Optional[str] = None
-    score: Optional[int] = None
-    language: Optional[str] = None
-    source_code: Optional[str] = None
-    result: Optional[dict] = None

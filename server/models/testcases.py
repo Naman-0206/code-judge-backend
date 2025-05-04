@@ -9,8 +9,8 @@ class Testcase(TimeStampMixin, SQLModel, table=True):
     __tablename__ = "testcases"
 
     id: int = Field(primary_key=True)
-    input_url: str
-    output_url: str
+    input: str
+    output: str
     time_limit: Optional[int] = Field(default=None)
     memory_limit: Optional[int] = Field(default=None)
     name: Optional[str] = Field(default=None, max_length=500)
