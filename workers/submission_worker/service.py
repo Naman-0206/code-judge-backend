@@ -8,8 +8,14 @@ from .executor.executors import lang_runners
 from .constants import exit_codes
 
 
-r = redis.Redis(host=os.getenv("REDIS_HOST"), port=os.getenv(
-    "REDIS_PORT"), decode_responses=True)
+r = redis.Redis(
+    host=os.getenv("REDIS_HOST", "localhost"), 
+    port=os.getenv("REDIS_PORT", 6379),
+    password=os.getenv("REDIS_PASSWORD", None),
+    username=os.getenv("REDIS_USER", None),
+    ssl=True,
+    decode_responses=True
+    )
 
 file_extensions = {
     "c": ".c",

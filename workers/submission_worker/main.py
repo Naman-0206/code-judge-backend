@@ -6,7 +6,13 @@ import os
 logger = getLogger(__name__)
 
 connection = pika.BlockingConnection(pika.ConnectionParameters(
-    os.getenv("RABBITMQ_HOST"), os.getenv("RABBITMQ_PORT")))
+    host=os.getenv("RABBITMQ_HOST"), 
+    port=os.getenv("RABBITMQ_PORT"),
+    virtual_host=os.getenv("RABBITMQ_VHOST", "/"),
+    credentials=pika.PlainCredentials(
+        os.getenv("RABBITMQ_USER", "guest"),
+        os.getenv("RABBITMQ_PASSWORD", "guest")
+    )))
 channel = connection.channel()
 
 queue_name = 'submission_queue'

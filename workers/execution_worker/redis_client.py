@@ -1,7 +1,14 @@
 import redis
 import json
 import os
-r = redis.Redis(host=os.getenv("REDIS_HOST"), port=os.getenv("REDIS_PORT"), decode_responses=True)
 
+redis_client = redis.Redis(
+    host=os.getenv("REDIS_HOST", "localhost"), 
+    port=os.getenv("REDIS_PORT", 6379),
+    password=os.getenv("REDIS_PASSWORD", None),
+    username=os.getenv("REDIS_USER", None),
+    ssl=True,
+    decode_responses=True
+    )
 def save_result(key, value):
-    r.set(key, json.dumps(value), ex=5*60)
+    redis_client.set(key, json.dumps(value), ex=5*60)
