@@ -10,6 +10,6 @@ class TimeStampMixin(SQLModel):
     )
     updated_at: Optional[datetime.datetime] = Field(
         default_factory=lambda: datetime.datetime.now(datetime.timezone.utc),
-        sa_column_kwargs={"on_update": func.now()},
+        sa_column_kwargs={"onupdate": func.now()},
         nullable=False
     )

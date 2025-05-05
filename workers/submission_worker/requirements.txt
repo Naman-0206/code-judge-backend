@@ -1,2 +1,4 @@
 pika
 redis[hiredis]
+sqlmodel
+psycopg2-binary==2.9.1

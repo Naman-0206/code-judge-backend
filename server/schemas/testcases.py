@@ -4,10 +4,8 @@ from sqlmodel import SQLModel
 from datetime import datetime
 
 class TestcaseBase(SQLModel):
-    input_url: str
-    output_url: str
-    time_limit: Optional[int] = None
-    memory_limit: Optional[int] = None
+    input: str
+    output: str
     name: Optional[str] = None
     is_sample: bool = False
 
@@ -25,9 +23,7 @@ class TestcaseRead(TestcaseBase):
 
 
 class TestcaseUpdate(SQLModel):
-    input_url: Optional[str] = None
-    output_url: Optional[str] = None
-    time_limit: Optional[int] = None
-    memory_limit: Optional[int] = None
+    input: Optional[str] = None
+    output: Optional[str] = None
     name: Optional[str] = None
     is_sample: Optional[bool] = None
