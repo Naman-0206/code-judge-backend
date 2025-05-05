@@ -1,6 +1,6 @@
 import os
 from typing import Tuple
-from submission_worker.models import Event
+# from submission_worker.models import Event
 
 
 def run_command(command: str, timeout: int = 5, memory_limit: int = 512) -> int:
@@ -82,39 +82,39 @@ def compare_files(executed_output_file: str, expected_output_file: str) -> int:
         return 401
 
 
-def create_files(event: Event, working_dir: str) -> Tuple[str, str, str, str, str]:
-    """
-    Creates necessary files for code execution based on the given Event instance.
+# def create_files(event: Event, working_dir: str) -> Tuple[str, str, str, str, str]:
+#     """
+#     Creates necessary files for code execution based on the given Event instance.
 
-    Args:
-        event (Event): An instance of the Event dataclass containing execution details.
-        working_dir (str): The directory where files will be created.
+#     Args:
+#         event (Event): An instance of the Event dataclass containing execution details.
+#         working_dir (str): The directory where files will be created.
 
-    Returns:
-        Tuple[str, str, str, str, str]: Paths to the created files (source, input, output, expected_output, error).
-    """
-    os.makedirs(working_dir, exist_ok=True)
+#     Returns:
+#         Tuple[str, str, str, str, str]: Paths to the created files (source, input, output, expected_output, error).
+#     """
+#     os.makedirs(working_dir, exist_ok=True)
 
     
-    source_file_path = os.path.join(working_dir, f"main{event.file_extension}")
-    input_file_path = os.path.join(working_dir, "input.txt")
-    output_file_path = os.path.join(working_dir, "output.txt")
-    expected_output_file_path = os.path.join(working_dir, "expected_output.txt")
-    error_file_path = os.path.join(working_dir, "error.txt")
+#     source_file_path = os.path.join(working_dir, f"main{event.file_extension}")
+#     input_file_path = os.path.join(working_dir, "input.txt")
+#     output_file_path = os.path.join(working_dir, "output.txt")
+#     expected_output_file_path = os.path.join(working_dir, "expected_output.txt")
+#     error_file_path = os.path.join(working_dir, "error.txt")
 
-    with open(source_file_path, "w") as source_file:
-        source_file.write(event.source_code)
+#     with open(source_file_path, "w") as source_file:
+#         source_file.write(event.source_code)
 
-    with open(input_file_path, "w") as input_file:
-        input_file.write(event.input)
+#     with open(input_file_path, "w") as input_file:
+#         input_file.write(event.input)
 
-    open(output_file_path, "w").close()
-    open(error_file_path, "w").close()
+#     open(output_file_path, "w").close()
+#     open(error_file_path, "w").close()
 
-    with open(expected_output_file_path, "w") as expected_output_file:
-        expected_output_file.write(event.expected_output)
+#     with open(expected_output_file_path, "w") as expected_output_file:
+#         expected_output_file.write(event.expected_output)
 
-    return source_file_path, input_file_path, output_file_path, expected_output_file_path, error_file_path
+#     return source_file_path, input_file_path, output_file_path, expected_output_file_path, error_file_path
 
 def create_file(file_path: str, file_content: str) -> str:
     os.makedirs(os.path.dirname(file_path), exist_ok=True)

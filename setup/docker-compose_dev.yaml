@@ -32,6 +32,7 @@ services:
       - RABBITMQ_PORT=${RABBITMQ_PORT}
       - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=${REDIS_PORT}
+      - DATABASE_URL=${DATABASE_URL}
 
     networks:
       - app_network
@@ -47,6 +48,7 @@ services:
       - RABBITMQ_PORT=${RABBITMQ_PORT}
       - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=${REDIS_PORT}
+      - DATABASE_URL=${DATABASE_URL}
     networks:
       - app_network
     restart: unless-stopped

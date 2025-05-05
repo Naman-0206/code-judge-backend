@@ -1,22 +1,20 @@
-in optamisation phase: remove json instead fetch from url
-    dont provide testcases in queue msg this makes jsonification slow
+save submission status in db
 
-in worker add user and give it permision to access ONLY worker/temp
 
-key checking in worker
+MAKE SURE USER CODE CANNOT GET ENV VARS
+in worker add user and give it permision to access ONLY worker/temp 
 
-connection check in workers
+
+start rabbitmq before anything else.
+keep an open connection to rabbitmq at server side.
+rabbitmq heartbeat check
+
+add error handling in apis. like foriegn key constraints.
 
 add auth in redis and rabbitmq
 
 proper logging
 
-testcases are in memory make them in disk
-
-rabbitmq heartbeat check
+testcases are in db move to disk
 
 use compiled version
-
-return execution time and memory use
-
-start rabbitmq before anything else

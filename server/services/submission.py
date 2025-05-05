@@ -15,6 +15,7 @@ class SubmissionEvent(BaseModel):
     source_code: str
     time_limit: int
     memory_limit: int
+    question_id: str
 
 
 def submit_code(submission: Submission):
@@ -25,10 +26,11 @@ def submit_code(submission: Submission):
         language=submission.language,
         source_code=submission.source_code,
         time_limit=question.time_limit,
-        memory_limit=question.memory_limit
+        memory_limit=question.memory_limit,
+        question_id=str(question.id)
     )
     redis_client.set(f"submission_{submission.id}",
-                     json.dumps({"status": "Running..."}),
+                     json.dumps({"status": "In Queue"}),
                      ex=5*60)
     rabbit.publish("submission_queue", event.model_dump_json())
 
