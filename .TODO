@@ -11,7 +11,8 @@ rabbitmq heartbeat check
 
 add error handling in apis. like foriegn key constraints.
 
-add auth in redis and rabbitmq
+for compiled languages compile code once
+
 
 proper logging
 
