@@ -63,12 +63,13 @@ class RabbitMQ():
         self.password = os.getenv('RABBITMQ_PASSWORD', 'guest')
         self.host = os.getenv('RABBITMQ_HOST', 'localhost')
         self.port = int(os.getenv('RABBITMQ_PORT', 5672))
+        self.virtual_host = os.getenv('RABBITMQ_VHOST', '/')
         self.connection = None
         self.channel = None
 
     def connect(self):
         credentials = pika.PlainCredentials(self.user, self.password)
-        parameters = pika.ConnectionParameters(host=self.host, port=self.port, credentials=credentials, heartbeat=30)
+        parameters = pika.ConnectionParameters(host=self.host, virtual_host= self.virtual_host, port=self.port, credentials=credentials, heartbeat=30)
         self.connection = pika.BlockingConnection(parameters)
         self.channel = self.connection.channel()
     

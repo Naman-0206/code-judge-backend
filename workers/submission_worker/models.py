@@ -1,6 +1,6 @@
 from uuid import UUID
 from pydantic import BaseModel
-from sqlmodel import Field, SQLModel, Relationship, func
+from sqlmodel import Field, ForeignKey, SQLModel, func, Column, JSON, DateTime
 from typing import Optional, Literal
 import datetime
 
@@ -38,5 +38,22 @@ class Testcase(TimeStampMixin, SQLModel, table=True):
 
     question_id: UUID = Field(foreign_key="questions.id")
 
-    # Many-to-one relationship: Each Testcase belongs to one Question
-    # question = Relationship(back_populates="testcases")
+class Submission(SQLModel, table=True):
+    __tablename__ = "submissions"
+
+    id: int = Field(primary_key=True)
+    creator_id: UUID = Field()
+    question_id: Optional[UUID] = Field(ForeignKey("questions.id", ondelete="SET NULL"))
+    verdict: Optional[str]
+    score: Optional[int]
+    language: str
+    source_code: str
+
+    result: Optional[dict] = Field(
+        default_factory=dict,
+        sa_column=Column(JSON)
+    )
+    created_at: datetime.datetime = Field(
+        default_factory=lambda: datetime.datetime.now(datetime.timezone.utc),
+        sa_column=Column(DateTime(timezone=True), server_default=func.now())
+    )
