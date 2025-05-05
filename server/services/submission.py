@@ -1,5 +1,6 @@
 import json
 from typing import Literal
+from fastapi import HTTPException
 from pydantic import BaseModel
 from core.rabbitmq import rabbit
 from models.submissions import Submission
@@ -36,4 +37,7 @@ def submit_code(submission: Submission):
 
 
 def check(submission_id: int):
-    return redis_client.get(f"submission_{submission_id}")
+    res = redis_client.get(f"submission_{submission_id}")
+    if not res:
+        raise HTTPException(status_code=404, detail="Submission not found.")
+    return json.loads(redis_client.get(f"submission_{submission_id}"))
