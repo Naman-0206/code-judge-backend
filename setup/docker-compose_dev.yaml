@@ -27,17 +27,9 @@ services:
     depends_on: [redis-server]
     ports:
       - "${SERVER_PORT}:8000"
-    environment:
-      - RABBITMQ_HOST=${RABBITMQ_HOST}
-      - RABBITMQ_VHOST=${RABBITMQ_VHOST}
-      - RABBITMQ_PORT=${RABBITMQ_PORT}
-      - RABBITMQ_USER=${RABBITMQ_USER}
-      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
-      - REDIS_USER=${REDIS_USER}
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - DATABASE_URL=${DATABASE_URL}
+    
+    env_file:
+      - .env.dev
 
     networks:
       - app_network

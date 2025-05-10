@@ -14,7 +14,7 @@ class Submission(SQLModel, table=True):
     __tablename__ = "submissions"
 
     id: int = Field(primary_key=True)
-    creator_id: UUID = Field(foreign_key="users.id")
+    creator_id: str = Field(foreign_key="users.id")
     question_id: Optional[UUID] = Field(
         sa_column=Column(ForeignKey(
             "questions.id", ondelete="SET NULL"), nullable=True)

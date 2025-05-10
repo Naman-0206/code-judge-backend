@@ -42,7 +42,7 @@ class Submission(SQLModel, table=True):
     __tablename__ = "submissions"
 
     id: int = Field(primary_key=True)
-    creator_id: UUID = Field()
+    creator_id: str = Field()
     question_id: Optional[UUID] = Field(ForeignKey("questions.id", ondelete="SET NULL"))
     verdict: Optional[str]
     score: Optional[int]

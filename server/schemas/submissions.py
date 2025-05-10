@@ -14,11 +14,10 @@ class SubmissionBase(BaseModel):
 class SubmissionCreate(SQLModel):
     language: Literal["c", "cpp", "python"]
     source_code: str
-    creator_id: UUID
 
 class SubmissionRead(SubmissionBase):
     id: int
-    creator_id: UUID
+    creator_id: str
     question_id: Optional[UUID]
     created_at: datetime
 

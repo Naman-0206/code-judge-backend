@@ -1,9 +1,18 @@
-pika
-redis[hiredis]
-uvicorn
 fastapi
+uvicorn[standard]
 sqlmodel
 psycopg2-binary==2.9.1
 
+# Auth & Security
+python-jose[cryptography]
+passlib[bcrypt]
 
+# Messaging & Caching
+pika
+redis[hiredis]
+
+# Pydantic email validation
+email-validator
+
+# Migration
 alembic
