@@ -21,7 +21,6 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 token_blacklist = set()
 
 
-
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
@@ -58,16 +57,18 @@ def revoke_token(token: str):
 def username_exists(username: str, session: Session) -> bool:
     return bool(session.exec(select(User).where(User.username == username)).first())
 
+
 def get_user_by_email(email: str, session: Session) -> User:
-    user =  session.exec(select(User).where(User.email == email)).first()
+    user = session.exec(select(User).where(User.email == email)).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
+
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     session: Session = Depends(get_session),
-):
+) -> User:
     token = credentials.credentials
     payload = decode_token(token)
     if payload is None:
@@ -80,4 +81,3 @@ def get_current_user(
     user = get_user_by_email(user_email, session)
 
     return user
-

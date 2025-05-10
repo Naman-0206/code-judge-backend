@@ -7,9 +7,10 @@ from core.db import get_session
 from models.submissions import Submission
 from models.questions import Question
 from schemas.submissions import SubmissionRead, SubmissionCreate
+from models.users import User
+from core.auth import get_current_user
 import services.submission as submissionService
 import logging
-
 
 
 router = APIRouter(tags=["submissions"])
@@ -85,7 +86,8 @@ def get_submission(
 def submit_code(
     question_id: UUID,
     submission: SubmissionCreate,
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_session),
+    user: User = Depends(get_current_user)
 ):
     try:
         question = session.get(Question, question_id)
@@ -95,7 +97,7 @@ def submit_code(
         db_submission = Submission(
             language=submission.language,
             source_code=submission.source_code,
-            creator_id=submission.creator_id,
+            creator_id=user.id,
             question_id=question_id,
             verdict="In Queue",
             score=None,  # You can calculate score later based on the code evaluation
