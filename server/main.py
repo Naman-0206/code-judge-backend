@@ -3,6 +3,7 @@ from api.execute import router as execution_router
 from api.submission import router as submission_router
 from api.questions import router as questions_router
 from api.testcases import router as testcases_router
+from api.auth import router as auth_router
 from models.users import User
 
 from core.db import create_db_and_tables
@@ -14,6 +15,7 @@ def on_startup():
     create_db_and_tables()
 
 
+app.include_router(auth_router, prefix="/auth")
 app.include_router(execution_router, prefix="/execute")
 app.include_router(questions_router, prefix="/questions")
 app.include_router(testcases_router, prefix="/questions")
