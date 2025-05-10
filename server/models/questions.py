@@ -27,5 +27,5 @@ class Question(TimeStampMixin, SQLModel, table=True):
     # One-to-many relationship: One Question has many Submissions
     submissions: List["Submission"] = Relationship(back_populates="question")
 
-    creator_id: UUID = Field(foreign_key="users.id")
+    creator_id: str = Field(foreign_key="users.id")
     creator: Optional["User"] = Relationship(back_populates="questions")

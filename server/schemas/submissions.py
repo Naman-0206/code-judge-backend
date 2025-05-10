@@ -17,7 +17,7 @@ class SubmissionCreate(SQLModel):
 
 class SubmissionRead(SubmissionBase):
     id: int
-    creator_id: UUID
+    creator_id: str
     question_id: Optional[UUID]
     created_at: datetime
 

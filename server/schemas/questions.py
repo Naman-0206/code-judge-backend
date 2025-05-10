@@ -7,7 +7,7 @@ from sqlmodel import SQLModel
 class QuestionBase(SQLModel):
     title: str
     body: str
-    # creator_id: UUID
+    # creator_id: str
     time_limit: Optional[int] = 10
     memory_limit: Optional[int] = 512
 

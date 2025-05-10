@@ -30,7 +30,8 @@ def register(user: UserCreate, session: Session = Depends(get_session)):
         name=user.name,
         email=user.email,
         username=user.username,
-        password=hashed_pw
+        password=hashed_pw,
+        id=user.username
     )
     session.add(new_user)
     session.commit()
