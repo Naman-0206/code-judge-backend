@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional, TYPE_CHECKING
 from uuid import UUID
 from sqlmodel import DateTime, SQLModel, Field, Relationship, func
-from sqlalchemy import JSON, Column
+from sqlalchemy import JSON, Column, ForeignKey
 import datetime as dt
 
 if TYPE_CHECKING:
@@ -16,7 +16,8 @@ class Submission(SQLModel, table=True):
     id: int = Field(primary_key=True)
     creator_id: str = Field(foreign_key="users.id")
     question_id: Optional[UUID] = Field(
-        foreign_key="questions.id", sa_column_kwargs={"on_delete": "SET NULL"}
+        sa_column=Column(ForeignKey(
+            "questions.id", ondelete="SET NULL"), nullable=True)
     )
     verdict: Optional[str]
     score: Optional[int]

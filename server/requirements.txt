@@ -13,3 +13,6 @@ redis[hiredis]
 
 # Pydantic email validation
 email-validator
+
+# Migration
+alembic
