@@ -1,27 +1,39 @@
 # HeatCode Backend Setup & Deployment Guide
 
-This guide explains how to set up, build Docker images, run services, and handle database migrations for the **HeatCode Backend**.
+Backend service for **HeatCode** — an online code execution & judging platform.  
+This repository contains the API server, background workers, and database migration setup.
+
+> ⚠ **Current Status**: This repository is a work in progress. The currently deployed version runs **without workers** — only the API server is active.  
+> You can still fully test the system by following this guide to run it locally with workers enabled.
 
 ---
 
-## Clone the Repository
+## 📦 Tech Stack
+- **FastAPI** – REST API framework
+- **Docker** – Containerization
+- **PostgreSQL** – Database
+- **Alembic** – Database migrations
+- **RabbitMQ + Workers** – Task processing (submission & execution)
 
+---
+
+## 📥 Clone the Repository
 ```bash
 git clone https://github.com/Naman-0206/code-judge-backend
 cd code-judge-backend/setup
-```
+````
 
 ---
 
 ## ▶ Running the Backend Locally
 
-### On **Windows** (PowerShell):
+### On **Windows** (PowerShell)
 
 ```powershell
 .\run_backend_dev.bat
 ```
 
-### On **Linux**:
+### On **Linux**
 
 ```bash
 ./run_backend_dev.sh
@@ -29,11 +41,12 @@ cd code-judge-backend/setup
 
 ---
 
-## Building & Pushing Docker Images
+## 🛠 Building & Pushing Docker Images
 
-> Run these commands from the `setup/` directory.
+> Run all commands from the `setup/` directory.
+> ⚠ Make sure you are logged in to Docker Hub before pushing.
 
-### Build, Tag, and Push `server` (Backend API):
+### 1. Backend API (`server`)
 
 ```bash
 docker build -t heatcode_backend ../server
@@ -41,75 +54,62 @@ docker tag heatcode_backend naman0206/heatcode_backend:latest
 docker push naman0206/heatcode_backend:latest
 ```
 
----
-
-### Build, Tag, and Push `submission-worker`:
+### 2. Submission Worker
 
 ```bash
 docker build -t submission-worker ../workers/submission_worker
 docker tag submission-worker naman0206/submission-worker:latest
-docker push submission-worker naman0206/submission-worker:latest
+docker push naman0206/submission-worker:latest
 ```
 
----
-
-### Build, Tag, and Push `execution-worker`:
+### 3. Execution Worker
 
 ```bash
 docker build -t execution-worker ../workers/execution_worker
 docker tag execution-worker naman0206/execution-worker:latest
-docker push execution-worker naman0206/execution-worker:latest
+docker push naman0206/execution-worker:latest
 ```
 
 ---
 
 ## ▶ Running Workers via Docker
 
-Make sure the `.env` file is correctly configured with necessary environment variables.
+> Workers are currently **not deployed in production**.
 
-### Run `submission-worker`:
+Make sure the `.env` file is correctly configured.
 
 ```bash
 docker run -d --name submission-worker --env-file .env naman0206/submission-worker:latest
-```
-
-### Run `execution-worker`:
-
-```bash
 docker run -d --name execution-worker --env-file .env naman0206/execution-worker:latest
 ```
 
 ---
 
-## 🛠️ Database Migrations with Alembic
+## 🗄 Database Migrations (Alembic)
 
-### 1. Test on **development** database first.
+### 1. Test on Development Database
 
-Make sure `sqlalchemy.url` in `alembic.ini` points to your **dev database**.
+Ensure `sqlalchemy.url` in `alembic.ini` points to the **dev database**.
 
-### 2. Run upgrades:
+### 2. Upgrade
 
 ```bash
 alembic upgrade head
 ```
 
-### 3. Create new migration:
+### 3. Create a Migration
 
 ```bash
 alembic revision --autogenerate -m "your message here"
 alembic upgrade head
 ```
 
-This will generate a new migration script in the `alembic/versions/` folder.
-
 ---
 
-### Note on Production
+### Deploying to Production
 
-Once tested:
-
-- Replace the `sqlalchemy.url` in `alembic.ini` with the **production DB URL**.
-- If the production DB is out of sync, run:
+* Change `sqlalchemy.url` in `alembic.ini` to production DB URL.
+* If DB is out of sync:
 
 ```bash
 alembic upgrade head
@@ -117,10 +117,8 @@ alembic upgrade head
 
 ---
 
-### Manual Migrations (Optional):
-
-To create a manual migration script without autogeneration:
+### Manual Migrations
 
 ```bash
-alembic revision -m "first migrations"
+alembic revision -m "first migration"
 ```
